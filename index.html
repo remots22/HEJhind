@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<pre id="d"></pre>
+<script>
+(async()=>{
+const n=new Date(),c=new Date(n.toLocaleString("en-US",{timeZone:"Europe/Berlin"})),e=new Date(n.toLocaleString("en-US",{timeZone:"Europe/Tallinn"}));
+let t=new Date(e);
+c.getHours()>=12&&t.setDate(t.getDate()+1);
+const s=new Date(t);s.setDate(s.getDate()-1);s.setUTCHours(21,0,0,0);
+const d=new Date(t);d.setUTCHours(20,59,59,999);
+const u=`https://dashboard.elering.ee/api/nps/price?start=${s.toISOString()}&end=${d.toISOString()}`;
+try{
+const r=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`);
+const a=await r.json();
+let o={olemas:1};
+if(a.success&&a.data&&a.data.ee){
+const p=a.data.ee.filter(x=>x.price>70);
+if(p.length===0){
+const t2=new Date(t);t2.setDate(t2.getDate()-1);
+const s2=new Date(t2);s2.setDate(s2.getDate()-1);s2.setUTCHours(21,0,0,0);
+const d2=new Date(t2);d2.setUTCHours(20,59,59,999);
+const u2=`https://dashboard.elering.ee/api/nps/price?start=${s2.toISOString()}&end=${d2.toISOString()}`;
+const r2=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(u2)}`);
+const a2=await r2.json();
+o.olemas=0;
+if(a2.success&&a2.data&&a2.data.ee){
+const p2=a2.data.ee.filter(x=>x.price>70);
+o.data=p2.map(x=>({
+time:new Date(x.timestamp*1000).toLocaleTimeString('et-EE',{timeZone:'Europe/Tallinn',hour:'2-digit',minute:'2-digit'}),
+price:x.price
+}));
+}
+}else{
+o.data=p.map(x=>({
+time:new Date(x.timestamp*1000).toLocaleTimeString('et-EE',{timeZone:'Europe/Tallinn',hour:'2-digit',minute:'2-digit'}),
+price:x.price
+}));
+}
+}
+document.getElementById('d').textContent=JSON.stringify(o,null,2);
+}catch(e){
+document.getElementById('d').textContent=`{"error":"${e.message}"}`;
+}
+})();
+</script>
+</body>
+</html>
